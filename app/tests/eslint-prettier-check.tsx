@@ -1,7 +1,7 @@
 // Properly formatted function
 export function GoodComponent() {
   // Correct indentation
-  const [count, setCount] = useState(0);
+  const [count] = useState(0);
 
   // Proper spacing in object
   const styles = {
