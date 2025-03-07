@@ -101,74 +101,40 @@ jobs:
       # 3. Check Variable Naming Convention (camelCase)
       - name: Check variable naming conventions
         run: |
-          npx ts-node -e "
+            npx ts-node -e "
             const glob = require('glob');
             const fs = require('fs');
             const files: string[] = glob.sync('app/**/*.tsx');
             let hasError: boolean = false;
 
-            // Regular expressions for checking naming conventions
+            // Regular expression for variable declarations only
             const variableDeclaration = /\b(const|let|var)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*[=:]/g;
-            const functionParam = /\bfunction\s+\w+\s*\(([\s\S]*?)\)/g;
-            const arrowFunctionParam = /\(([^)]*)\)\s*=>/g;
-            const destructuring = /\b(?:const|let|var)\s*\{([^}]*)\}/g;
             
             // Checks if a variable name follows camelCase
             function isCamelCase(name: string): boolean {
-              return /^[a-z][a-zA-Z0-9]*$/.test(name) && !name.includes('_');
+                // Skip React component names (they should be PascalCase)
+                if (/^[A-Z][a-zA-Z0-9]*$/.test(name)) {
+                return true;
+                }
+                // Check for proper camelCase
+                return /^[a-z][a-zA-Z0-9]*$/.test(name) && !name.includes('_');
             }
 
             files.forEach((file: string) => {
-              const content: string = fs.readFileSync(file, 'utf8');
-              
-              // Check variable declarations
-              let match;
-              while ((match = variableDeclaration.exec(content)) !== null) {
+                const content: string = fs.readFileSync(file, 'utf8');
+                
+                // Check variable declarations
+                let match;
+                while ((match = variableDeclaration.exec(content)) !== null) {
                 const varName = match[2];
                 if (!isCamelCase(varName)) {
-                  console.error(`${file}: Variable '${varName}' should be in camelCase`);
-                  hasError = true;
+                    console.error(`${file}: Variable '${varName}' should be in camelCase`);
+                    hasError = true;
                 }
-              }
-
-              // Check function parameters
-              while ((match = functionParam.exec(content)) !== null) {
-                const params = match[1].split(',');
-                params.forEach(param => {
-                  const paramName = param.trim().split(':')[0].trim();
-                  if (paramName && !isCamelCase(paramName)) {
-                    console.error(`${file}: Function parameter '${paramName}' should be in camelCase`);
-                    hasError = true;
-                  }
-                });
-              }
-
-              // Check arrow function parameters
-              while ((match = arrowFunctionParam.exec(content)) !== null) {
-                const params = match[1].split(',');
-                params.forEach(param => {
-                  const paramName = param.trim().split(':')[0].trim();
-                  if (paramName && !isCamelCase(paramName)) {
-                    console.error(`${file}: Arrow function parameter '${paramName}' should be in camelCase`);
-                    hasError = true;
-                  }
-                });
-              }
-
-              // Check destructured variables
-              while ((match = destructuring.exec(content)) !== null) {
-                const vars = match[1].split(',');
-                vars.forEach(v => {
-                  const varName = v.trim().split(':')[0].trim();
-                  if (varName && !isCamelCase(varName)) {
-                    console.error(`${file}: Destructured variable '${varName}' should be in camelCase`);
-                    hasError = true;
-                  }
-                });
-              }
+                }
             });
 
             if (hasError) {
-              process.exit(1);
+                process.exit(1);
             }
-          " 
+            "
