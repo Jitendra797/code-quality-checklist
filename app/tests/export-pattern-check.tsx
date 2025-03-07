@@ -1,12 +1,8 @@
 
-// export function MyComponent() {
-//     return <div>Hello</div>
-//   }
-  
-
-  export default function MyComponent() {
+export function MyComponent() {
     return <div>Hello</div>
   }
+  
 
   
 //   function MyComponent() {
