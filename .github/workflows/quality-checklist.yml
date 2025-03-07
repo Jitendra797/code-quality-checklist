@@ -65,5 +65,36 @@ jobs:
               process.exit(1);
             }
           "
+      
+      # 2. Check State Variable Comments
+      - name: Check state variable comments
+        run: |
+          npx ts-node -e "
+            const glob = require('glob');
+            const fs = require('fs');
+            const files: string[] = glob.sync('app/**/*.tsx');
+            let hasError: boolean = false;
 
+            files.forEach((file: string) => {
+              const content: string = fs.readFileSync(file, 'utf8');
+              
+              // Find useState declarations
+              const stateDeclarations = content.matchAll(/const\s+\[\w+,\s*set\w+\]\s*=\s*useState[<\w+>]*\(/g);
+              
+              for (const match of stateDeclarations) {
+                const linePosition = content.substring(0, match.index).split('\n').length;
+                const previousLine = content.split('\n')[linePosition - 2];
+                
+                // Check if there's a comment above the useState
+                if (!previousLine?.trim().startsWith('//')) {
+                  console.error(`${file} line ${linePosition}: Missing comment for state variable`);
+                  hasError = true;
+                }
+              }
+            });
+
+            if (hasError) {
+              process.exit(1);
+            }
+          "
        
