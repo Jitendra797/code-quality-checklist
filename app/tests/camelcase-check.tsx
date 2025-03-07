@@ -1,4 +1,2 @@
-const firstName = 'John';
-const lastName = 'Doe';
-const userAge = 25;
-const isActive = true;
+const first_name = 'John';
+const last_name = 'Doe';
