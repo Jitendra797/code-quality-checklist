@@ -1,0 +1,69 @@
+name: Code Quality Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      # 1. Check Export Function Pattern
+      - name: Check export patterns
+        run: |
+          npx ts-node -e "
+            const glob = require('glob');
+            const fs = require('fs');
+            const files: string[] = glob.sync('app/**/*.tsx');
+            let hasError: boolean = false;
+
+            files.forEach((file: string) => {
+              const content: string = fs.readFileSync(file, 'utf8');
+              
+              // Check for arrow function exports
+              const hasArrowFunction = content.match(/export\s+const\s+\w+\s*=\s*(\(\)|[\w\s,]*)\s*=>/);
+              
+              // Check for non-exported functions
+              const hasNonExportedFunction = content.match(/^function\s+[A-Z]\w*|const\s+[A-Z]\w*\s*=/m);
+              
+              // Check for proper export function pattern
+              const hasProperExport = content.match(/export\s+function\s+[A-Z]\w*\s*\(/);
+              
+              if (hasArrowFunction) {
+                console.error(`${file}: Uses arrow function instead of 'export function'`);
+                hasError = true;
+              }
+              
+              if (hasNonExportedFunction) {
+                console.error(`${file}: Contains function that should use 'export function'`);
+                hasError = true;
+              }
+              
+              if (!hasProperExport && (hasArrowFunction || hasNonExportedFunction)) {
+                console.error(`${file}: Missing proper 'export function' pattern`);
+                hasError = true;
+              }
+            });
+
+            if (hasError) {
+              process.exit(1);
+            }
+          "
+
+       
