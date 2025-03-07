@@ -1,2 +1,1 @@
-// Tracks user authentication status
-const [isLoggedIn, setIsLoggedIn] = useState(false);
+const [failingState1, setFailingState1] = useState(false); // Missing comment above
