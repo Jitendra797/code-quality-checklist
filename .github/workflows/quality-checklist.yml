@@ -178,7 +178,7 @@ jobs:
                   const componentName: string = hasComponent[2];
                   const componentDir: string = path.dirname(componentFile);
                   const storyFile: string = path.join(componentDir, `${componentName}.stories.tsx`);
-                  const alternateStoryFile: string = path.join('stories', `${componentName}.stories.tsx`);
+                  const alternateStoryFile: string = path.join('stories', `${componentName}.stories.ts`);
                   
                   // Check if story file exists in component directory or stories directory
                   if (!fs.existsSync(storyFile) && !fs.existsSync(alternateStoryFile)) {
