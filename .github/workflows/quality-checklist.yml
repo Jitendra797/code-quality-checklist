@@ -156,28 +156,43 @@ jobs:
             const fs = require('fs');
             const path = require('path');
 
-            try {
-              const componentFiles = glob.sync('app/**/*.tsx');
-              let hasError = false;
+            interface ComponentData {
+              filePath: string;
+              name: string;
+            }
 
-              componentFiles.forEach((componentFile) => {
-                const content = fs.readFileSync(componentFile, 'utf8');
-                const hasComponent = content.match(/export\s+(function|const)\s+([A-Z]\\w+)/);
-                
-                if (hasComponent) {
-                  const componentName = hasComponent[2];
-                  const storyFile = path.join('stories', `${componentName}.stories.ts`);
+            try {
+              const componentFiles: string[] = glob.sync('app/**/*.tsx');
+              let hasError: boolean = false;
+
+              componentFiles.forEach((componentFile: string) => {
+                try {
+                  const content: string = fs.readFileSync(componentFile, 'utf8');
+                  const hasComponent = content.match(/export\\s+(function|const)\\s+([A-Z]\\w+)/);
                   
-                  if (!fs.existsSync(storyFile)) {
-                    console.error(\`Missing story file for ${componentName}\`);
-                    hasError = true;
+                  if (hasComponent) {
+                    const componentName: string = hasComponent[2];
+                    const storyFile: string = path.join('stories', `${componentName}.stories.ts`);
+                    
+                    if (!fs.existsSync(storyFile)) {
+                      console.error(`Missing story file for component '${componentName}'`);
+                      console.error(`Component file: ${componentFile}`);
+                      console.error(`Expected story file: ${storyFile}`);
+                      hasError = true;
+                    }
                   }
+                } catch (err) {
+                  console.error(`Error processing file ${componentFile}:`, err);
+                  hasError = true;
                 }
               });
 
-              if (hasError) process.exit(1);
+              if (hasError) {
+                console.error('Storybook check failed');
+                process.exit(1);
+              }
             } catch (err) {
-              console.error(err);
+              console.error('Error in Storybook check:', err);
               process.exit(1);
             }
           "
