@@ -152,49 +152,32 @@ jobs:
       - name: Check Storybook files exist
         run: |
           npx ts-node -e "
-              const glob = require('glob');
-              const fs = require('fs');
-              const path = require('path');
+            const glob = require('glob');
+            const fs = require('fs');
+            const path = require('path');
 
-              let hasError: boolean = false;
-
-              try {
-              // Find all component files
+            try {
               const componentFiles = glob.sync('app/**/*.tsx');
-              console.log('Found component files:', componentFiles);
+              let hasError = false;
 
-              componentFiles.forEach((componentFile: string) => {
-                  const content = fs.readFileSync(componentFile, 'utf8');
-                  
-                  // Check if file contains a React component
-                  const hasComponent = content.match(/export\s+(function|const)\s+([A-Z]\w+)/);
-                  
-                  if (hasComponent) {
+              componentFiles.forEach((componentFile) => {
+                const content = fs.readFileSync(componentFile, 'utf8');
+                const hasComponent = content.match(/export\s+(function|const)\s+([A-Z]\\w+)/);
+                
+                if (hasComponent) {
                   const componentName = hasComponent[2];
-                  const storyFile = path.resolve('stories', `${componentName}.stories.ts`);
+                  const storyFile = path.join('stories', `${componentName}.stories.ts`);
                   
-                  // Debug logging
-                  console.log(`Checking story file for ${componentName}:`, storyFile);
-                  console.log('Story file exists?', fs.existsSync(storyFile));
-
-                  // Only check if story file exists
                   if (!fs.existsSync(storyFile)) {
-                      console.error(`\nError: Missing Storybook file for component '${componentName}'`);
-                      console.error(`Component file: ${componentFile}`);
-                      console.error(`Expected story file: ${storyFile}`);
-                      hasError = true;
+                    console.error(\`Missing story file for ${componentName}\`);
+                    hasError = true;
                   }
-                  }
+                }
               });
 
-              if (hasError) {
-                  console.error('Storybook check failed');
-                  process.exit(1);
-              } else {
-                  console.log('All components have story files');
-              }
-              } catch (err) {
-              console.error('\nError in Storybook check:', err);
+              if (hasError) process.exit(1);
+            } catch (err) {
+              console.error(err);
               process.exit(1);
-              }
+            }
           "
