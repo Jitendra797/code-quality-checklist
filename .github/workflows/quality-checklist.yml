@@ -147,3 +147,54 @@ jobs:
 
           # Check Prettier formatting
           npx prettier --check "app/**/*.{ts,tsx}"
+
+      # 5. Check Storybook Files Exist
+      - name: Check Storybook files exist
+        run: |
+          npx ts-node -e "
+            const glob = require('glob');
+            const fs = require('fs');
+            const path = require('path');
+            let hasError: boolean = false;
+
+            // Find all component files
+            const componentFiles = glob.sync('app/**/*.tsx');
+
+            componentFiles.forEach((componentFile) => {
+              const content = fs.readFileSync(componentFile, 'utf8');
+              
+              // Check if file contains a React component
+              const hasComponent = content.match(/export\s+(function|const)\s+([A-Z]\w+)/);
+              
+              if (hasComponent) {
+                const componentName = hasComponent[2];
+                const componentDir = path.dirname(componentFile);
+                const storyFile = path.join(componentDir, `${componentName}.stories.tsx`);
+                const alternateStoryFile = path.join('stories', `${componentName}.stories.tsx`);
+                
+                // Check if story file exists in component directory or stories directory
+                if (!fs.existsSync(storyFile) && !fs.existsSync(alternateStoryFile)) {
+                  console.error(`${componentFile}: Missing Storybook file for component '${componentName}'`);
+                  console.error(`Expected story file at: ${storyFile} or ${alternateStoryFile}`);
+                  hasError = true;
+                }
+
+                // If story file exists, check if it's properly configured
+                if (fs.existsSync(storyFile)) {
+                  const storyContent = fs.readFileSync(storyFile, 'utf8');
+                  if (!storyContent.includes(`import { ${componentName} }`)) {
+                    console.error(`${storyFile}: Story file doesn't import component '${componentName}'`);
+                    hasError = true;
+                  }
+                  if (!storyContent.includes(`component: ${componentName}`)) {
+                    console.error(`${storyFile}: Story file doesn't configure component '${componentName}'`);
+                    hasError = true;
+                  }
+                }
+              }
+            });
+
+            if (hasError) {
+              process.exit(1);
+            }
+          "
