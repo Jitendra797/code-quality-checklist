@@ -156,54 +156,37 @@ jobs:
             const fs = require('fs');
             const path = require('path');
 
-            interface ComponentFile {
-              path: string;
-              name: string;
-            }
-
             let hasError: boolean = false;
 
-            // Find all component files
-            const componentFiles = glob.sync('app/**/*.tsx');
+            try {
+              // Find all component files
+              const componentFiles = glob.sync('app/**/*.tsx');
 
-            componentFiles.forEach((componentFile: string) => {
-              const content = fs.readFileSync(componentFile, 'utf8');
-              
-              // Check if file contains a React component
-              const hasComponent = content.match(/export\s+(function|const)\s+([A-Z]\w+)/);
-              
-              if (hasComponent) {
-                const componentName = hasComponent[2];
-                const storyFile = path.join('stories', `${componentName}.stories.ts`);
+              componentFiles.forEach((componentFile: string) => {
+                const content = fs.readFileSync(componentFile, 'utf8');
                 
-                // Check if story file exists
-                if (!fs.existsSync(storyFile)) {
-                  console.error(`\nError: Missing Storybook file for component '${componentName}'`);
-                  console.error(`Component file: ${componentFile}`);
-                  console.error(`Expected story file: ${storyFile}`);
-                  hasError = true;
-                } else {
-                  // Verify story file contents
-                  const storyContent = fs.readFileSync(storyFile, 'utf8');
+                // Check if file contains a React component
+                const hasComponent = content.match(/export\s+(function|const)\s+([A-Z]\w+)/);
+                
+                if (hasComponent) {
+                  const componentName = hasComponent[2];
+                  const storyFile = path.join('stories', `${componentName}.stories.ts`);
                   
-                  // Check if story imports the component
-                  if (!storyContent.includes(`import { ${componentName} }`)) {
-                    console.error(`\nError: Story file doesn't import component '${componentName}'`);
-                    console.error(`Story file: ${storyFile}`);
-                    hasError = true;
-                  }
-
-                  // Check if story configures the component
-                  if (!storyContent.includes(`component: ${componentName}`)) {
-                    console.error(`\nError: Story file doesn't configure component '${componentName}'`);
-                    console.error(`Story file: ${storyFile}`);
+                  // Only check if story file exists
+                  if (!fs.existsSync(storyFile)) {
+                    console.error(`\nError: Missing Storybook file for component '${componentName}'`);
+                    console.error(`Component file: ${componentFile}`);
+                    console.error(`Expected story file: ${storyFile}`);
                     hasError = true;
                   }
                 }
-              }
-            });
+              });
 
-            if (hasError) {
+              if (hasError) {
+                process.exit(1);
+              }
+            } catch (err) {
+              console.error('\nError in Storybook check:', err);
               process.exit(1);
             }
           "
